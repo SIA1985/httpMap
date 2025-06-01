@@ -22,18 +22,8 @@ func Listen(addr string) error {
 			return
 		}
 
-		var n int
-		n, err = fmt.Fprint(w, value)
-		if n != len(value) {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
 		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, value)
 	})
 
 	http.HandleFunc("PUT /storage/{key}/{data}", func(w http.ResponseWriter, r *http.Request) {

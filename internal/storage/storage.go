@@ -22,6 +22,16 @@ func NewStorage(pathToDataFile string) (s *Storage, err error) {
 		data:           make(map[string][]byte),
 	}
 
+	var fileInfo os.FileInfo
+	fileInfo, err = os.Stat(pathToDataFile)
+	if err != nil {
+		return
+	}
+
+	if fileInfo.Size() == 0 {
+		return
+	}
+
 	rawData, err = os.ReadFile(pathToDataFile)
 	if err != nil {
 		return
@@ -53,7 +63,7 @@ func (s *Storage) Load(key string) ([]byte, error) {
 	defer s.mutex.RUnlock()
 
 	value, exists := s.data[key]
-	if exists {
+	if !exists {
 		return nil, fmt.Errorf("no such key '%s'", key)
 	}
 
@@ -80,6 +90,7 @@ func (s *Storage) Save() (err error) {
 	if err != nil {
 		return
 	}
+	defer saveFile.Close()
 
 	data := buffer.Bytes()
 

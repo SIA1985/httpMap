@@ -14,6 +14,8 @@ func main() {
 	addr := flag.String("addr", "", "http-server addr")
 	savePeriod := flag.Uint("savePeriod", 0, "secs to drop ram to file")
 
+	flag.Parse()
+
 	httpinterface.Storage, err = storage.NewStorage(*pathToDataFile)
 	if err != nil {
 		panic(err)
