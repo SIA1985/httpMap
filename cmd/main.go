@@ -4,28 +4,20 @@ import (
 	"flag"
 	httpinterface "storage/internal/httpInterface"
 	"storage/internal/storage"
-	"time"
 )
 
 func main() {
 	var err error
 
-	pathToDataFile := flag.String("saveFile", "", "path to save file")
+	file := flag.String("file", "", "name of save file")
 	addr := flag.String("addr", "", "http-server addr")
-	savePeriod := flag.Uint("savePeriod", 0, "secs to drop ram to file")
 
 	flag.Parse()
 
-	httpinterface.Storage, err = storage.NewStorage(*pathToDataFile)
+	httpinterface.Storage, err = storage.NewStorage(*file)
 	if err != nil {
 		panic(err)
 	}
-
-	go func() {
-		for range time.Tick(time.Duration(*savePeriod) * time.Second) {
-			httpinterface.Storage.Save()
-		}
-	}()
 
 	err = httpinterface.Listen(*addr)
 	if err != nil {

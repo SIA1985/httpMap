@@ -38,7 +38,32 @@ func Listen(addr string) error {
 			return
 		}
 
+		err = Storage.Save()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
 		w.WriteHeader(http.StatusOK)
+	})
+
+	http.HandleFunc("PUT /file/{name}", func(w http.ResponseWriter, r *http.Request) {
+		var err error
+
+		name := r.PathValue("name")
+
+		err = Storage.SetDataFile(name)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+	})
+
+	http.HandleFunc("GET /storage/kyes", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, Storage.Keys())
 	})
 
 	return http.ListenAndServe(addr, nil)
