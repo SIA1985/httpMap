@@ -179,37 +179,47 @@ func (s *Storage) Load(file string, key string) (value []byte, err error) {
 	return value, nil
 }
 
-// func (s *Storage) Save() (err error) {
-// 	var buffer bytes.Buffer
+func (s *Storage) Save(file string) (err error) {
+	if _, exists := s.data[file]; !exists {
+		err = fmt.Errorf("no such file '%s'", file)
+		return
+	}
 
-// 	enconder := gob.NewEncoder(&buffer)
+	var buffer bytes.Buffer
 
-// 	s.mutex.RLock()
-// 	defer s.mutex.RUnlock()
+	enconder := gob.NewEncoder(&buffer)
 
-// 	err = enconder.Encode(s.data)
-// 	if err != nil {
-// 		return
-// 	}
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
 
-// 	var saveFile *os.File
-// 	saveFile, err = os.OpenFile(s.pwdFile, os.O_WRONLY|os.O_TRUNC, 0644)
-// 	if err != nil {
-// 		return
-// 	}
-// 	defer saveFile.Close()
+	err = enconder.Encode(s.data[file])
+	if err != nil {
+		return
+	}
 
-// 	data := buffer.Bytes()
+	pwdFile, err := getPWDfile(file)
+	if err != nil {
+		return
+	}
 
-// 	var n int
-// 	n, err = saveFile.Write(data)
-// 	if n != len(data) {
-// 		err = fmt.Errorf("saved only %d bytes", n)
-// 		return
-// 	}
-// 	if err != nil {
-// 		return
-// 	}
+	var saveFile *os.File
+	saveFile, err = os.OpenFile(pwdFile, os.O_WRONLY|os.O_TRUNC, 0644)
+	if err != nil {
+		return
+	}
+	defer saveFile.Close()
 
-// 	return
-// }
+	data := buffer.Bytes()
+
+	var n int
+	n, err = saveFile.Write(data)
+	if n != len(data) {
+		err = fmt.Errorf("saved only %d bytes", n)
+		return
+	}
+	if err != nil {
+		return
+	}
+
+	return
+}
