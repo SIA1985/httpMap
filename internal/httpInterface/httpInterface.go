@@ -10,13 +10,58 @@ var Storage *storage.Storage
 
 func Listen(addr string) error {
 
-	http.HandleFunc("GET /storage/{key}", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("GET /files", func(w http.ResponseWriter, r *http.Request) {
+		files, err := Storage.Files()
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, files)
+	})
+
+	http.HandleFunc("GET /keys/{file}", func(w http.ResponseWriter, r *http.Request) {
+		file := r.PathValue("file")
+
+		keys, err := Storage.Keys(file)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, keys)
+	})
+
+	http.HandleFunc("PUT /storage/{file}/{key}/{data}", func(w http.ResponseWriter, r *http.Request) {
 		var err error
 
+		file := r.PathValue("file")
+		key := r.PathValue("key")
+		value := r.PathValue("data")
+
+		err = Storage.Store(file, key, []byte(value))
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		err = Storage.Save(file)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+	})
+
+	http.HandleFunc("GET /storage/{file}/{key}", func(w http.ResponseWriter, r *http.Request) {
+		file := r.PathValue("file")
 		key := r.PathValue("key")
 
 		var value []byte
-		value, err = Storage.Load(key)
+		value, err := Storage.Load(file, key)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
@@ -24,46 +69,6 @@ func Listen(addr string) error {
 
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, value)
-	})
-
-	http.HandleFunc("PUT /storage/{key}/{data}", func(w http.ResponseWriter, r *http.Request) {
-		var err error
-
-		key := r.PathValue("key")
-		value := r.PathValue("data")
-
-		err = Storage.Store(key, []byte(value))
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		err = Storage.Save()
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		w.WriteHeader(http.StatusOK)
-	})
-
-	http.HandleFunc("PUT /file/{name}", func(w http.ResponseWriter, r *http.Request) {
-		var err error
-
-		name := r.PathValue("name")
-
-		err = Storage.SetDataFile(name)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		w.WriteHeader(http.StatusOK)
-	})
-
-	http.HandleFunc("GET /storage/kyes", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, Storage.Keys())
 	})
 
 	return http.ListenAndServe(addr, nil)

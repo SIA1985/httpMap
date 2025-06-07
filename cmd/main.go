@@ -9,12 +9,14 @@ import (
 func main() {
 	var err error
 
-	file := flag.String("file", "", "name of save file")
+	format := flag.String(".format", ".map", "format of save file")
 	addr := flag.String("addr", "", "http-server addr")
 
 	flag.Parse()
 
-	httpinterface.Storage, err = storage.NewStorage(*file)
+	storage.DataFileFormat = *format
+
+	httpinterface.Storage, err = storage.NewStorage()
 	if err != nil {
 		panic(err)
 	}

@@ -13,14 +13,23 @@ import (
 
 var DataFileFormat string
 
-func getPWDfile(file string) (pwdFile string, err error) {
-	var pwd string
+func getPWD() (pwd string, err error) {
 	pwd, err = filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
 		return
 	}
 
-	pwdFile = filepath.Join(pwd, file)
+	return
+}
+
+func getPWDfile(file string) (pwdFile string, err error) {
+	var pwd string
+	pwd, err = getPWD()
+	if err != nil {
+		return
+	}
+
+	pwdFile = filepath.Join(pwd, file+DataFileFormat)
 	return
 }
 
@@ -37,7 +46,7 @@ func NewStorage() (s *Storage, err error) {
 		data: make(map[string]StorageMap),
 	}
 
-	pwd, err := getPWDfile("")
+	pwd, err := getPWD()
 	if err != nil {
 		return
 	}
@@ -113,6 +122,11 @@ func (s *Storage) AddDataFile(file string) (err error) {
 	}
 	defer saveFile.Close()
 
+	storageMap := make(map[string][]byte)
+	defer func() {
+		s.data[file] = storageMap
+	}()
+
 	var fileInfo os.FileInfo
 	fileInfo, err = saveFile.Stat()
 	if err != nil {
@@ -129,8 +143,6 @@ func (s *Storage) AddDataFile(file string) (err error) {
 		return
 	}
 
-	storageMap := make(map[string][]byte)
-
 	decoder := gob.NewDecoder(bytes.NewBuffer(rawData))
 	err = decoder.Decode(&storageMap)
 	if err != nil {
@@ -139,8 +151,6 @@ func (s *Storage) AddDataFile(file string) (err error) {
 
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-
-	s.data[file] = storageMap
 
 	return
 }
