@@ -33,7 +33,7 @@ func getPWDfile(file string) (pwdFile string, err error) {
 	return
 }
 
-type StorageMap map[string][]byte
+type StorageMap map[string]string
 
 type Storage struct {
 	/*file -> [key -> value]*/
@@ -122,7 +122,7 @@ func (s *Storage) AddDataFile(file string) (err error) {
 	}
 	defer saveFile.Close()
 
-	storageMap := make(map[string][]byte)
+	storageMap := make(map[string]string)
 	defer func() {
 		s.data[file] = storageMap
 	}()
@@ -155,7 +155,7 @@ func (s *Storage) AddDataFile(file string) (err error) {
 	return
 }
 
-func (s *Storage) Store(file string, key string, value []byte) error {
+func (s *Storage) Store(file string, key string, value string) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -171,7 +171,7 @@ func (s *Storage) Store(file string, key string, value []byte) error {
 	return nil
 }
 
-func (s *Storage) Load(file string, key string) (value []byte, err error) {
+func (s *Storage) Load(file string, key string) (value string, err error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
@@ -183,7 +183,8 @@ func (s *Storage) Load(file string, key string) (value []byte, err error) {
 	}
 
 	if value, exists = s.data[file][key]; !exists {
-		return nil, fmt.Errorf("no such key '%s'", key)
+		err = fmt.Errorf("no such key '%s'", key)
+		return
 	}
 
 	return value, nil
