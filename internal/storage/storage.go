@@ -234,3 +234,61 @@ func (s *Storage) Save(file string) (err error) {
 
 	return
 }
+
+func (s *Storage) RemoveValue(file string, key string) (err error) {
+	if _, exists := s.data[file]; !exists {
+		err = fmt.Errorf("no such file '%s'", file)
+		return
+	}
+
+	if _, exists := s.data[file][key]; !exists {
+		err = fmt.Errorf("no such key '%s'", key)
+		return
+	}
+
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	delete(s.data[file], key)
+
+	return
+}
+
+func (s *Storage) RemoveDataFile(file string) (err error) {
+	if _, exists := s.data[file]; !exists {
+		err = fmt.Errorf("no such file '%s'", file)
+		return
+	}
+
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	delete(s.data, file)
+
+	var pwdFile string
+	pwdFile, err = getPWDfile(file)
+	if err != nil {
+		return
+	}
+
+	err = os.Remove(pwdFile)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func (s *Storage) ClearDataFile(file string) (err error) {
+	if _, exists := s.data[file]; !exists {
+		err = fmt.Errorf("no such file '%s'", file)
+		return
+	}
+
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	clear(s.data[file])
+
+	return
+}
