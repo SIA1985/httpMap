@@ -79,5 +79,48 @@ func Listen(addr string) error {
 		fmt.Fprint(w, value)
 	})
 
+	http.HandleFunc("DELETE /storage/{file}/{key}", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println(r.URL)
+
+		file := r.PathValue("file")
+		key := r.PathValue("key")
+
+		err := Storage.RemoveValue(file, key)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+	})
+
+	http.HandleFunc("DELETE /storage/{file}", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println(r.URL)
+
+		file := r.PathValue("file")
+
+		err := Storage.RemoveDataFile(file)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+	})
+
+	http.HandleFunc("DELETE /storage/clear/{file}", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println(r.URL)
+
+		file := r.PathValue("file")
+
+		err := Storage.ClearDataFile(file)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+	})
+
 	return http.ListenAndServe(addr, nil)
 }
